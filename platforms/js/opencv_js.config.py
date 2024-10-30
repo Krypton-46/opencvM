@@ -88,6 +88,7 @@ imgproc = {
         'Scharr',
         'sepFilter2D',
         'Sobel',
+        'stackBlur',
         'threshold',
         'warpAffine',
         'warpPerspective',
