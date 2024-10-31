@@ -183,10 +183,10 @@ class LSTM2LayerImpl CV_FINAL : public LSTM2Layer
             const MatShape& inp0 = inputs[0];
             const MatShape& Wx = inputs[1];
             const MatShape& Wh = inputs[2];
-            const MatShape& bias = inputs[3];
-            const MatShape& seq_len = inputs[4];
-            const MatShape& initial_h = inputs[5];
-            const MatShape& initial_c = inputs[6];
+            // const MatShape& bias = inputs[3];
+            // const MatShape& seq_len = inputs[4];
+            // const MatShape& initial_h = inputs[5];
+            // const MatShape& initial_c = inputs[6];
 
             int _hidSize = Wh[2];
             int _inpSize = Wx[2];
