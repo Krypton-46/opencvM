@@ -310,20 +310,20 @@ class LSTM2LayerImpl CV_FINAL : public LSTM2Layer
             for (const auto& out : output)
                 std::cout << "output shape: " << out.size << std::endl;
 
-            std::cout << "transforming blobs" << std::endl;
             // transform weights matrices similar to old LSTM parser
-            // TODO: move out from the loop?
-
+            std::cout << "usePeephole: " << usePeephole << std::endl;
             std::vector<Mat> blobs_ = {input[1], input[2], input[3], input[5], input[6]};
-            transformBlobs(blobs_);
+            if (usePeephole)
+                blobs_.push_back(input[7]);
 
+            transformBlobs(blobs_);
             weightsConstants(); //TODO: Call inside the constructor??
             const bool needYcTransform = blobsInitializers ? true : false; // if the producer is onnx
 
             Mat cOut = produceCellOutput ? output[0].clone() : Mat();
             Mat hOut = produceOutputYh ? output[0].clone() : Mat();
             const int numDirs = 1 + static_cast<int>(bidirectional);
-
+            std::cout << "numDirs: " << numDirs << std::endl;
             for (int i = 0; i < numDirs; i++)
             {
                 std::cout << "*********************" << std::endl;
@@ -353,12 +353,29 @@ class LSTM2LayerImpl CV_FINAL : public LSTM2Layer
                 int hidSize = Wh.size[1];
                 int inpSize = Wx.size[1];
 
-                Mat pI, pF, pO;
                 Wh = Wh.rowRange(i * Wh.rows / numDirs, (i + 1) * Wh.rows / numDirs);
                 Wx = Wx.rowRange(i * Wx.rows / numDirs, (i + 1) * Wx.rows / numDirs);
                 bias = bias.colRange(i * bias.cols / numDirs, (i + 1) * bias.cols / numDirs);
                 h_0 = h_0.rowRange(i * h_0.rows / numDirs, (i + 1) * h_0.rows / numDirs);
                 c_0 = c_0.rowRange(i * c_0.rows / numDirs, (i + 1) * c_0.rows / numDirs);
+
+                Mat pI, pF, pO;
+                if (usePeephole)
+                {
+                    pI = blobs_[5];
+                    pF = blobs_[6];
+                    pO = blobs_[7];
+
+                    pI = pI.rowRange(i * pI.rows / numDirs, (i + 1) * pI.rows / numDirs);
+                    pI = pI.colRange(i * pI.cols / numDirs, (i + 1) * pI.cols / numDirs);
+
+                    pF = pF.rowRange(i * pF.rows / numDirs, (i + 1) * pF.rows / numDirs);
+                    pF = pF.colRange(i * pF.cols / numDirs, (i + 1) * pF.cols / numDirs);
+
+                    pO = pO.rowRange(i * pO.rows / numDirs, (i + 1) * pO.rows / numDirs);
+                    pO = pO.colRange(i * pO.cols / numDirs, (i + 1) * pO.cols / numDirs);
+                }
+
 
                 std::cout << "Wx sum: " << cv::sum(Wx)[0] << std::endl;
                 std::cout << "Wh sum: " << cv::sum(Wh)[0] << std::endl;
@@ -371,6 +388,10 @@ class LSTM2LayerImpl CV_FINAL : public LSTM2Layer
                 std::cout << "bias shape: " << bias.size << std::endl;
                 std::cout << "h_0 shape: " << h_0.size << std::endl;
                 std::cout << "c_0 shape: " << c_0.size << std::endl;
+
+                std::cout << "pI shape: " << pI.size << std::endl;
+                std::cout << "pF shape: " << pF.size << std::endl;
+                std::cout << "pO shape: " << pO.size << std::endl;
 
                 Mat hInternal = internals[0],
                     cInternal = internals[1],
@@ -582,7 +603,7 @@ class LSTM2LayerImpl CV_FINAL : public LSTM2Layer
 
                 std::cout << "produceOutputYh needs to be produced" << std::endl;
                 // check the shape of output[1]
-                std::cout << "output[2] shape: " << output[2].size << std::endl;
+                std::cout << "output[1] shape: " << output[1].size << std::endl;
                 if (numDirs == 1){
                     // take a slice of output[0]
                     Mat hOut = output[0].rowRange(output[0].size[0] - 1, output[0].size[0]);
@@ -691,15 +712,19 @@ class LSTM2LayerImpl CV_FINAL : public LSTM2Layer
         void transformBlobs(std::vector<Mat>& blobs)
         {
             std::cout << "transformBlobs" << std::endl;
-            std::cout << "blobs[0] shape: " << blobs.size() << std::endl;
+
+            for (int i = 0; i < blobs.size(); i++){
+                std::cout << "blobs[" << i << "] shape: " << blobs[i].size << std::endl;
+            }
+            std::cout << "usePeephole: " << usePeephole << std::endl;
             Mat &Wx = blobs[0];
             Mat &Wh = blobs[1];
             Mat &b = blobs[2];
 
-            std::vector<Mat> cudaWorkaround;
-            cudaWorkaround.push_back(Wx.clone());
-            cudaWorkaround.push_back(Wh.clone());
-            cudaWorkaround.push_back(b.clone());
+            // std::vector<Mat> cudaWorkaround;
+            // cudaWorkaround.push_back(Wx.clone());
+            // cudaWorkaround.push_back(Wh.clone());
+            // cudaWorkaround.push_back(b.clone());
 
             const int numHidden = Wh.size[2];
 
@@ -734,22 +759,22 @@ class LSTM2LayerImpl CV_FINAL : public LSTM2Layer
             toIFOC(Wh);
             toIFOC(b);
 
-            std::cout << "Wx shape: " << Wx.size << std::endl;
-            std::cout << "Wh shape: " << Wh.size << std::endl;
+            // std::cout << "Wx shape: " << Wx.size << std::endl;
+            // std::cout << "Wh shape: " << Wh.size << std::endl;
 
             Wx = Wx.reshape(1, Wx.size[0] * Wx.size[1]);
             Wh = Wh.reshape(1, Wh.size[0] * Wh.size[1]);
 
-            std::cout << "Wx shape: " << Wx.size << std::endl;
-            std::cout << "Wh shape: " << Wh.size << std::endl;
-            std::cout << "b shape: " << b.size << std::endl;
+            // std::cout << "Wx shape: " << Wx.size << std::endl;
+            // std::cout << "Wh shape: " << Wh.size << std::endl;
+            // std::cout << "b shape: " << b.size << std::endl;
 
             blobs[0] = Wx;
             blobs[1] = Wh;
             blobs[2] = b.reshape(1, 1);
-            std::cout << "blobs[0] shape: " << blobs[0].size << std::endl;
-            std::cout << "blobs[1] shape: " << blobs[1].size << std::endl;
-            std::cout << "blobs[2] shape: " << blobs[2].size << std::endl;
+            // std::cout << "blobs[0] shape: " << blobs[0].size << std::endl;
+            // std::cout << "blobs[1] shape: " << blobs[1].size << std::endl;
+            // std::cout << "blobs[2] shape: " << blobs[2].size << std::endl;
 
             if (!blobs[3].empty()){
                 blobs[3] = h0;
@@ -779,8 +804,14 @@ class LSTM2LayerImpl CV_FINAL : public LSTM2Layer
             blobs[7] = blobs[7].clone().reshape(1, blobs[7].total());  // Single column.
             blobs[7] = Mat::diag(blobs[7]);
 
+
+            for (int i = 0; i < blobs.size(); i++){
+                std::cout << "blobs[" << i << "] shape: " << blobs[i].size << std::endl;
+            }
             // so that future patch removing copies can leave all indexing as is
-            blobs.insert(blobs.begin(), cudaWorkaround.begin(), cudaWorkaround.end());
+            // blobs.insert(blobs.begin(), cudaWorkaround.begin(), cudaWorkaround.end());
+            std::cout << "transformBlobs done" << std::endl;
+            return;
         }
 };
 
