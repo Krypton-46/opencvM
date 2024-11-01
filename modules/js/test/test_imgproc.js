@@ -429,6 +429,18 @@ QUnit.test('test_filter', function(assert) {
         assert.equal(size.width, 7);
     }
 
+    // stackBlur
+    {
+        let src = cv.matFromArray(2, 3, cv.CV_8U, [10,25,30,45,50,60]);
+        cv.stackBlur(src, src, new cv.Size(3, 3));
+
+        // Verify result.
+        let expected = new Uint8Array([22,29,36,38,43,50]);
+
+        assert.deepEqual(src.data, expected);
+        src.delete();
+    }
+
     // medianBlur
     {
         let mat1 = cv.Mat.ones(9, 9, cv.CV_8UC3);
