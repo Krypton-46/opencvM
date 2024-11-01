@@ -354,6 +354,19 @@ static inline int readInt(const uchar* p)
 #endif
 }
 
+static inline int64_t readLong(const uchar* p)
+{
+    // On little endian CPUs, both branches produce the same result. On big endian, only the else branch does.
+#if CV_LITTLE_ENDIAN_MEM_ACCESS
+    int64_t val;
+    memcpy(&val, p, sizeof(val));
+    return val;
+#else
+    int64_t val = (int64_t)(p[0] | (p[1] << 8l) | (p[2] << 16l) | (p[3] << 24l) | (p[4] << 32l) | (p[5] << 40l) | (p[6] << 48l));
+    return val;
+#endif
+}
+
 static inline double readReal(const uchar* p)
 {
     // On little endian CPUs, both branches produce the same result. On big endian, only the else branch does.
@@ -370,16 +383,15 @@ static inline double readReal(const uchar* p)
 #endif
 }
 
-static inline void writeInt(uchar* p, int ival)
+template <typename T>
+static inline void writeInt(uchar* p, T ival)
 {
     // On little endian CPUs, both branches produce the same result. On big endian, only the else branch does.
 #if CV_LITTLE_ENDIAN_MEM_ACCESS
     memcpy(p, &ival, sizeof(ival));
 #else
-    p[0] = (uchar)ival;
-    p[1] = (uchar)(ival >> 8);
-    p[2] = (uchar)(ival >> 16);
-    p[3] = (uchar)(ival >> 24);
+    for (size_t i = 0, j = 8; i < sizeof(ival); ++i, j += 8)
+        p[i] = (uchar)(ival >> j);
 #endif
 }
 
@@ -2353,7 +2365,7 @@ FileNode::operator int64_t() const
 
     if( type == INT )
     {
-        return readInt(p);
+        return readLong(p);
     }
     else if( type == REAL )
     {
@@ -2487,7 +2499,13 @@ void FileNode::setValue( int type, const void* value, int len )
         sz += 4;
 
     if( type == INT )
-        sz += 4;
+    {
+        int64_t ival = *(const int64_t*)value;
+        if (ival > std::numeric_limits<int>::max() || ival < std::numeric_limits<int>::min())
+            sz += 4;
+        else
+            sz += 8;
+    }
     else if( type == REAL )
         sz += 8;
     else if( type == STRING )
@@ -2507,8 +2525,10 @@ void FileNode::setValue( int type, const void* value, int len )
 
     if( type == INT )
     {
-        int ival = *(const int*)value;
-        writeInt(p, ival);
+        if (sz > 8)
+            writeInt(p, *(const int64_t*)value);
+        else
+            writeInt(p, *(const int*)value);
     }
     else if( type == REAL )
     {
