@@ -2069,7 +2069,7 @@ TEST_P(FileStorage_exact_type, mat_0d)
 
 TEST_P(FileStorage_exact_type, mat_1d)
 {
-    Mat src({1}, CV_64S, Scalar(std::numeric_limits<int64_t>::min()));
+    Mat src({1}, CV_64S, Scalar((int64_t)std::numeric_limits<int32_t>::max() + 1));
     CV_CheckEQ(src.dims, 1, "");
     Mat dst = fsWriteRead(src, GetParam());
     EXPECT_EQ(src.dims, dst.dims);

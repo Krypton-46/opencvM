@@ -176,7 +176,7 @@ char* floatToString( char* buf, size_t bufSize, float value, bool halfprecision,
     return buf;
 }
 
-static const char symbols[] = "ucwsifdhHbLUn";
+static const char symbols[] = "ucwsifdhHbUIn";
 
 static char typeSymbol(int depth)
 {
@@ -1485,6 +1485,7 @@ void FileStorage::Impl::convertToCollection(int type, FileNode &node) {
         // otherwise we don't know where to get the element names from
         CV_Assert(type == FileNode::SEQ);
         if (node_type == FileNode::INT) {
+            printf("here 1\n");
             ival = readInt(ptr);
             add_first_scalar = true;
         } else if (node_type == FileNode::REAL) {
@@ -2465,7 +2466,10 @@ size_t FileNode::rawSize() const
         p += 4;
     size_t sz0 = (size_t)(p - p0);
     if( tp == INT )
+    {
+        printf("here 2\n");
         return sz0 + 4;
+    }
     if( tp == REAL )
         return sz0 + 8;
     if( tp == NONE )
