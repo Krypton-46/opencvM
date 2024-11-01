@@ -4,6 +4,7 @@
 
 #include "precomp.hpp"
 #include "persistence.hpp"
+#include <iostream>
 
 namespace cv
 {

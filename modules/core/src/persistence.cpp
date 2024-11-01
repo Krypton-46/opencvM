@@ -362,6 +362,7 @@ static inline int64_t readLong(const uchar* p)
     memcpy(&val, p, sizeof(val));
     return val;
 #else
+    // TODO: test it
     int64_t val = (int64_t)(p[0] | (p[1] << 8l) | (p[2] << 16l) | (p[3] << 24l) | (p[4] << 32l) | (p[5] << 40l) | (p[6] << 48l));
     return val;
 #endif
@@ -1485,7 +1486,6 @@ void FileStorage::Impl::convertToCollection(int type, FileNode &node) {
         // otherwise we don't know where to get the element names from
         CV_Assert(type == FileNode::SEQ);
         if (node_type == FileNode::INT) {
-            printf("here 1\n");
             ival = readInt(ptr);
             add_first_scalar = true;
         } else if (node_type == FileNode::REAL) {
@@ -2466,10 +2466,7 @@ size_t FileNode::rawSize() const
         p += 4;
     size_t sz0 = (size_t)(p - p0);
     if( tp == INT )
-    {
-        printf("here 2\n");
         return sz0 + 4;
-    }
     if( tp == REAL )
         return sz0 + 8;
     if( tp == NONE )
@@ -2688,7 +2685,7 @@ FileNodeIterator& FileNodeIterator::readRaw( const String& fmt, void* _data0, si
                     FileNode node = *(*this);
                     if( node.isInt() )
                     {
-                        int ival = (int)node;
+                        int64_t ival = (int64_t)node;
                         switch( elem_type )
                         {
                         case CV_8U:
@@ -2712,7 +2709,7 @@ FileNodeIterator& FileNodeIterator::readRaw( const String& fmt, void* _data0, si
                             data += sizeof(short);
                             break;
                         case CV_32U:
-                            *(unsigned*)data = (unsigned)std::max(ival, 0);
+                            *(unsigned*)data = (unsigned)std::max(ival, 0l);
                             data += sizeof(unsigned);
                             break;
                         case CV_32S:

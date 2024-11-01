@@ -2029,8 +2029,7 @@ TEST(Core_InputOutput, FileStorage_invalid_attribute_value_regression_25946)
 template <typename T>
 T fsWriteRead(const T& expectedValue, const char* ext)
 {
-    // std::string fname = cv::tempfile(ext);
-    std::string fname = format("/home/d.kurtaev/file%s", ext);
+    std::string fname = cv::tempfile(ext);
     FileStorage fs_w(fname, FileStorage::WRITE);
     fs_w << "value" << expectedValue;
     fs_w.release();
@@ -2043,17 +2042,14 @@ T fsWriteRead(const T& expectedValue, const char* ext)
 }
 
 typedef testing::TestWithParam<const char*> FileStorage_exact_type;
-TEST_P(FileStorage_exact_type, long_int_pos)
+TEST_P(FileStorage_exact_type, long_int)
 {
     int64_t expected = std::numeric_limits<int64_t>::max();
     int64_t value = fsWriteRead(expected, GetParam());
     EXPECT_EQ(value, expected);
-}
 
-TEST_P(FileStorage_exact_type, long_int_neg)
-{
-    int64_t expected = std::numeric_limits<int64_t>::min();
-    int64_t value = fsWriteRead(expected, GetParam());
+    expected = std::numeric_limits<int64_t>::min();
+    value = fsWriteRead(expected, GetParam());
     EXPECT_EQ(value, expected);
 }
 
