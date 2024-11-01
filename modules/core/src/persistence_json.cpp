@@ -81,6 +81,12 @@ public:
         writeScalar( key, fs::itoa( value, buf, 10 ));
     }
 
+    void write(const char* key, int64_t value)
+    {
+        char buf[128];
+        writeScalar( key, fs::itoa( value, buf, 10, true ));
+    }
+
     void write( const char* key, double value )
     {
         char buf[128];
@@ -596,7 +602,7 @@ public:
             }
             else
             {
-                int ival = (int)strtol( beg, &ptr, 0 );
+                int64_t ival = strtol( beg, &ptr, 0 );
                 CV_PERSISTENCE_CHECK_END_OF_BUFFER_BUG_CPP();
 
                 node.setValue(FileNode::INT, &ival);
