@@ -310,6 +310,10 @@ class LSTM2LayerImpl CV_FINAL : public LSTM2Layer
             for (const auto& out : output)
                 std::cout << "output shape: " << out.size << std::endl;
 
+            // set outputs to 0
+            for (auto& out : output)
+                out.setTo(0);
+
             // transform weights matrices similar to old LSTM parser
             std::cout << "usePeephole: " << usePeephole << std::endl;
             std::vector<Mat> blobs_ = {input[1], input[2], input[3], input[5], input[6]};
