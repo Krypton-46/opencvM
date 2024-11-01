@@ -1083,6 +1083,11 @@ void FileStorage::Impl::write(const String &key, int value) {
     getEmitter().write(key.c_str(), value);
 }
 
+void FileStorage::Impl::write(const String &key, int64_t value) {
+    CV_Assert(write_mode);
+    getEmitter().write(key.c_str(), value);
+}
+
 void FileStorage::Impl::write(const String &key, double value) {
     CV_Assert(write_mode);
     getEmitter().write(key.c_str(), value);
@@ -2070,6 +2075,11 @@ void writeScalar( FileStorage& fs, int value )
     fs.p->write(String(), value);
 }
 
+void writeScalar( FileStorage& fs, int64_t value )
+{
+    fs.p->write(String(), value);
+}
+
 void writeScalar( FileStorage& fs, float value )
 {
     fs.p->write(String(), (double)value);
@@ -2090,6 +2100,11 @@ void write( FileStorage& fs, const String& name, int value )
     fs.p->write(name, value);
 }
 
+void write( FileStorage& fs, const String& name, int64_t value )
+{
+    fs.p->write(name, value);
+}
+
 void write( FileStorage& fs, const String& name, float value )
 {
     fs.p->write(name, (double)value);
@@ -2106,6 +2121,7 @@ void write( FileStorage& fs, const String& name, const String& value )
 }
 
 void FileStorage::write(const String& name, int val) { p->write(name, val); }
+void FileStorage::write(const String& name, int64_t val) { p->write(name, val); }
 void FileStorage::write(const String& name, double val) { p->write(name, val); }
 void FileStorage::write(const String& name, const String& val) { p->write(name, val); }
 void FileStorage::write(const String& name, const Mat& val) { cv::write(*this, name, val); }
@@ -2306,6 +2322,27 @@ std::string FileNode::name() const
 }
 
 FileNode::operator int() const
+{
+    const uchar* p = ptr();
+    if(!p)
+        return 0;
+    int tag = *p;
+    int type = (tag & TYPE_MASK);
+    p += (tag & NAMED) ? 5 : 1;
+
+    if( type == INT )
+    {
+        return readInt(p);
+    }
+    else if( type == REAL )
+    {
+        return cvRound(readReal(p));
+    }
+    else
+        return 0x7fffffff;
+}
+
+FileNode::operator int64_t() const
 {
     const uchar* p = ptr();
     if(!p)
@@ -2782,6 +2819,15 @@ void read(const FileNode& node, int& val, int default_val)
     if( !node.empty() )
     {
         val = (int)node;
+    }
+}
+
+void read(const FileNode& node, int64_t& val, int64_t default_val)
+{
+    val = default_val;
+    if( !node.empty() )
+    {
+        val = (int64_t)node;
     }
 }
 

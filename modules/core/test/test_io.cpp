@@ -4,7 +4,6 @@
 #include "test_precomp.hpp"
 #include "opencv2/core/core_c.h"
 #include <fstream>
-#include <any>
 
 namespace opencv_test { namespace {
 
@@ -2043,12 +2042,12 @@ T fsWriteRead(const T& expectedValue, const char* ext)
 }
 
 typedef testing::TestWithParam<const char*> FileStorage_exact_type;
-// TEST_P(FileStorage_exact_type, long_int)
-// {
-//     int64_t expected = std::numeric_limits<int64_t>::max();
-//     int64_t value = fsWriteRead(expected, GetParam());
-//     EXPECT_EQ(value, expected);
-// }
+TEST_P(FileStorage_exact_type, long_int)
+{
+    int64_t expected = std::numeric_limits<int64_t>::max();
+    int64_t value = fsWriteRead(expected, GetParam());
+    EXPECT_EQ(value, expected);
+}
 
 TEST_P(FileStorage_exact_type, mat_0d)
 {
@@ -2062,7 +2061,7 @@ TEST_P(FileStorage_exact_type, mat_0d)
 
 TEST_P(FileStorage_exact_type, mat_1d)
 {
-    Mat src({1}, CV_32S, Scalar(8));
+    Mat src({1}, CV_64S, Scalar(std::numeric_limits<int64_t>::min()));
     CV_CheckEQ(src.dims, 1, "");
     Mat dst = fsWriteRead(src, GetParam());
     EXPECT_EQ(src.dims, dst.dims);
