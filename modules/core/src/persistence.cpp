@@ -2500,13 +2500,7 @@ void FileNode::setValue( int type, const void* value, int len )
         sz += 4;
 
     if( type == INT )
-    {
-        int64_t ival = *(const int64_t*)value;
-        if (ival > std::numeric_limits<int>::max() || ival < std::numeric_limits<int>::min())
-            sz += 4;
-        else
-            sz += 8;
-    }
+        sz += 4;
     else if( type == REAL )
         sz += 8;
     else if( type == STRING )
