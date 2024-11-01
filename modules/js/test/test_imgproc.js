@@ -279,6 +279,18 @@ QUnit.test('test_imgProc', function(assert) {
         expected_img.delete();
         compare_result.delete();
     }
+
+    // applyColorMap
+    {
+        let src = cv.matFromArray(2, 1, cv.CV_8U, [50,100]);
+        cv.applyColorMap(src, src, cv.COLORMAP_AUTUMN);
+
+        // Verify result.
+        let expected = new Uint8Array([60,44,44,119,89,87]);
+
+        assert.deepEqual(src.data, expected);
+        src.delete();
+    }
 });
 
 QUnit.test('test_segmentation', function(assert) {
@@ -427,6 +439,18 @@ QUnit.test('test_filter', function(assert) {
         assert.equal(mat2.channels(), 1);
         assert.equal(size.height, 7);
         assert.equal(size.width, 7);
+    }
+
+    // stackBlur
+    {
+        let src = cv.matFromArray(2, 3, cv.CV_8U, [10,25,30,45,50,60]);
+        cv.stackBlur(src, src, new cv.Size(3, 3));
+
+        // Verify result.
+        let expected = new Uint8Array([22,29,36,38,43,50]);
+
+        assert.deepEqual(src.data, expected);
+        src.delete();
     }
 
     // medianBlur
