@@ -279,6 +279,18 @@ QUnit.test('test_imgProc', function(assert) {
         expected_img.delete();
         compare_result.delete();
     }
+
+    // applyColorMap
+    {
+        let src = cv.matFromArray(2, 1, cv.CV_8U, [50,100]);
+        cv.applyColorMap(src, src, cv.COLORMAP_AUTUMN);
+
+        // Verify result.
+        let expected = new Uint8Array([60,44,44,119,89,87]);
+
+        assert.deepEqual(src.data, expected);
+        src.delete();
+    }
 });
 
 QUnit.test('test_segmentation', function(assert) {
